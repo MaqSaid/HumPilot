@@ -1,0 +1,327 @@
+/* UI Shell Styles */
+
+.game-container {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom, #87ceeb, #ffdab9);
+}
+
+/* Start Screen */
+.start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  max-width: 480px;
+  width: 100%;
+}
+
+.start-screen__title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #333;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.6);
+}
+
+.start-screen__instructions {
+  font-size: 1.25rem;
+  color: #444;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.start-screen__high-score {
+  font-size: 1.125rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.start-screen__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+.btn {
+  min-width: 200px;
+  min-height: 48px;
+  padding: 14px 28px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn--primary {
+  background: #4caf50;
+  color: white;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn--primary:hover {
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5);
+}
+
+.btn--secondary {
+  background: #2196f3;
+  color: white;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.btn--secondary:hover {
+  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.5);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: #555;
+  border: 2px solid #999;
+}
+
+.btn--ghost:hover {
+  border-color: #555;
+  color: #333;
+}
+
+/* Error message */
+.start-screen__error {
+  color: #d32f2f;
+  background: rgba(211, 47, 47, 0.1);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Calibration Screen */
+.calibration-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  max-width: 480px;
+  width: 100%;
+}
+
+.calibration-screen__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.calibration-screen__prompt {
+  font-size: 1.5rem;
+  color: #444;
+  margin-bottom: 2rem;
+  font-weight: 600;
+}
+
+.calibration-screen__progress {
+  width: 100%;
+  max-width: 300px;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.calibration-screen__progress-bar {
+  height: 100%;
+  background: #4caf50;
+  border-radius: 6px;
+  transition: width 0.1s linear;
+}
+
+.calibration-screen__pitch-display {
+  font-size: 1.25rem;
+  color: #555;
+  margin-bottom: 2rem;
+  min-height: 2rem;
+}
+
+.calibration-screen__skip {
+  margin-top: 1rem;
+}
+
+/* Game Over Screen */
+.gameover-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  padding: 2rem;
+}
+
+.gameover-screen__title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.gameover-screen__score {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #444;
+  margin-bottom: 0.5rem;
+}
+
+.gameover-screen__high-score {
+  font-size: 1.25rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.gameover-screen__new-best {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #daa520;
+  margin-bottom: 1rem;
+  animation: pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+.gameover-screen__daily {
+  font-size: 1.125rem;
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+.gameover-screen__restart {
+  margin-top: 1.5rem;
+}
+
+/* HUD */
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 20px;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.hud__left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hud__daily-date {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+.hud__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud__score {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+.hud__mute-btn {
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.hud__mute-btn:active {
+  transform: scale(0.9);
+}
+
+/* Game Canvas */
+.game-canvas-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.game-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Stream lost notification */
+.stream-lost-notification {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  z-index: 200;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.stream-lost-notification__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #d32f2f;
+  margin-bottom: 0.5rem;
+}
+
+.stream-lost-notification__message {
+  font-size: 1.125rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+}

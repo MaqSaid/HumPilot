@@ -27,16 +27,19 @@ graph TD
         GOS[GameOverScreen]
         HUD[HUD Overlay]
         CR[Canvas Ref Manager]
+        CS[CalibrationScreen]
     end
 
     subgraph Audio Pipeline
         MIC[Microphone] --> AC[AudioCapture]
         AC --> AN[AnalyserNode]
         AN --> PD[PitchDetector - pitchy]
+        AC --> AM[AmbientMusic]
     end
 
     subgraph Game Core
-        PD --> PM[PitchMapper]
+        CM[CalibrationManager] --> PM[PitchMapper]
+        PD --> PM
         PM --> GS[GameState]
         GS --> OG[ObstacleGenerator]
         GS --> CD[CollisionDetector]
@@ -49,11 +52,18 @@ graph TD
         R --> CV[Canvas 2D]
     end
 
+    subgraph Deployment
+        SW[Service Worker / PWA]
+    end
+
     CR --> CV
     APP --> SS
+    APP --> CS
     APP --> GOS
     APP --> HUD
     GS -.->|state snapshots| HUD
+    AM -.->|harmonizes with| PD
+    CS -.->|saves| CM
 ```
 
 ### Separation of Concerns
@@ -242,7 +252,7 @@ interface Renderer {
 }
 ```
 
-**Responsibilities:** Draws the plane (hand-drawn paper plane style), obstacles (sketch-style columns), scrolling background with parallax, and score HUD. Uses Canvas 2D API with bezier curves and slight randomization for hand-drawn feel. Does NOT render start/game-over screens (those are React components). The Renderer implements the visual identity described in the Visual Identity section — sky gradient background with parallax layers, white paper plane with tilt animation and trail, cloud-style obstacles, and score pop effects.
+**Responsibilities:** Draws the plane (hand-drawn paper plane style), obstacles (sketch-style columns), scrolling background with parallax, and score HUD. Uses Canvas 2D API with bezier curves and slight randomization for hand-drawn feel. Does NOT render start/game-over screens (those are React components — including CalibrationScreen). The Renderer implements the visual identity described in the Visual Identity section — sky gradient background with parallax layers, white paper plane with tilt animation and trail, cloud-style obstacles, and score pop effects.
 
 ### GameLoop
 
@@ -267,6 +277,11 @@ interface GameLoop {
 
 // StartScreen.tsx - shown when status === 'start'
 // Props: onStart callback
+// Updated to show "Daily Challenge" button and "Recalibrate" option
+
+// CalibrationScreen.tsx - shown when no calibration exists or player requests recalibration
+// Props: onComplete(CalibrationData), onSkip callbacks
+// Guides player through humming low note then high note with visual feedback
 
 // GameOverScreen.tsx - shown when status === 'gameover'
 // Props: score, highScore, onRestart callback
@@ -279,6 +294,75 @@ interface GameLoop {
 ```
 
 **Design rationale:** React handles what it's good at — declarative UI, responsive layout, component lifecycle. The canvas game loop runs in a `useEffect` with a ref, never triggering React re-renders during gameplay. State flows one-way: game loop → React (via callbacks for status changes and score updates for HUD).
+
+### CalibrationScreen
+
+```typescript
+interface CalibrationData {
+  lowFrequency: number;   // Player's lowest comfortable humming frequency in Hz
+  highFrequency: number;  // Player's highest comfortable humming frequency in Hz
+  timestamp: number;      // When calibration was performed
+}
+
+interface CalibrationManager {
+  /** Check if calibration data exists in localStorage. */
+  hasCalibration(): boolean;
+  /** Get stored calibration data, or null if none exists. */
+  getCalibration(): CalibrationData | null;
+  /** Save calibration data to localStorage. */
+  saveCalibration(data: CalibrationData): void;
+  /** Clear existing calibration data. */
+  clearCalibration(): void;
+  /** Get the effective pitch range (calibrated or default). */
+  getEffectiveRange(): { min: number; max: number };
+}
+```
+
+**Responsibilities:** During calibration, the player hums their lowest note for 2 seconds (system captures the average stable frequency) then their highest note for 2 seconds. The system adds a 10% buffer on each side to account for variation. If calibrated range is less than 100 Hz wide, fall back to defaults. The CalibrationScreen is a React component; the CalibrationManager is a pure logic module. PitchMapper reads the effective range from CalibrationManager instead of using hardcoded 80-500 Hz.
+
+### AmbientMusic
+
+```typescript
+interface AmbientMusic {
+  /** Initialize oscillators in the existing AudioContext. */
+  init(audioContext: AudioContext): void;
+  /** Update harmonizing tone based on current detected pitch. */
+  update(currentFrequency: number | null): void;
+  /** Start ambient music playback. */
+  start(): void;
+  /** Stop ambient music playback. */
+  stop(): void;
+  /** Mute/unmute toggle. */
+  setMuted(muted: boolean): void;
+  /** Check if muted. */
+  isMuted(): boolean;
+  /** Dispose oscillators and nodes. */
+  dispose(): void;
+}
+```
+
+**Responsibilities:** Creates 2-3 oscillators (sine/triangle waves) in the existing AudioContext. When player pitch is detected, sets oscillator frequencies to harmonizing intervals (perfect fifth below = frequency × 2/3, octave below = frequency / 2). When null pitch, plays a gentle drone at 110 Hz. Volume is set to -20dB below input level via GainNode. Smooth frequency transitions using `setTargetAtTime` to avoid clicks. Stops/disposes on game-over or pause.
+
+### DailyChallenge (Seeded RNG)
+
+```typescript
+interface SeededRNG {
+  /** Create a seeded random number generator from a date string. */
+  create(seed: string): () => number;
+}
+```
+
+**Responsibilities:** Implements a simple seeded pseudo-random number generator (mulberry32 or similar). The seed is the current date as `YYYY-MM-DD` string, hashed to a 32-bit integer. The ObstacleGenerator accepts an optional RNG function — if provided (daily challenge mode), it uses the seeded RNG instead of Math.random() for gap positioning. This produces identical obstacle layouts for all players on the same day. Standard mode continues to use Math.random().
+
+Daily challenge scores are stored in localStorage under a separate key: `dailyScore_YYYY-MM-DD`.
+
+### PWA Configuration
+
+No new runtime component needed. Configuration-only:
+- `public/manifest.json` — app name "HumPilot", icons (192×192, 512×512), theme color matching sky gradient, display: "standalone", orientation: "any"
+- `vite-plugin-pwa` generates the service worker automatically with precaching of all build assets
+- Service worker strategy: "CacheFirst" for static assets, "NetworkFirst" for manifest/updates
+- Update prompt: When a new version is detected, show a non-intrusive "Update available" toast on start screen. Player can dismiss or refresh.
 
 ## Data Models
 
@@ -341,6 +425,19 @@ const GAME_CONFIG = {
   TREE_COLOR: '#6B8E23',
   HUD_TEXT_COLOR: '#333333',
   SCORE_POP_COLOR: '#DAA520',
+
+  // Calibration
+  CALIBRATION_DURATION: 2,           // seconds per note capture
+  CALIBRATION_BUFFER_PERCENT: 0.1,   // 10% buffer on each side
+  MIN_CALIBRATION_RANGE: 100,        // Hz minimum range width
+
+  // Ambient Music
+  AMBIENT_VOLUME_DB: -20,            // dB below input level
+  AMBIENT_DRONE_FREQ: 110,           // Hz drone when no pitch detected
+  AMBIENT_TRANSITION_TIME: 0.1,      // seconds for smooth frequency change
+
+  // Daily Challenge
+  DAILY_SCORE_KEY_PREFIX: 'dailyScore_',
 } as const;
 ```
 
@@ -353,9 +450,12 @@ const GAME_CONFIG = {
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Start
+    [*] --> Calibration: No saved calibration
+    [*] --> Start: Calibration exists
+    Calibration --> Start: On complete or skip
     Start --> Playing: Start action + mic granted
     Start --> Start: Start action + mic denied (show error)
+    Start --> Calibration: Recalibrate action
     Playing --> Paused: Mic stream lost
     Paused --> Playing: Mic stream restored + resume
     Playing --> GameOver: Collision or boundary violation
@@ -515,6 +615,24 @@ graph LR
 
 **Validates: Requirements 9.5**
 
+### Property 14: Calibrated Pitch Mapping
+
+*For any* calibration data with lowFrequency L and highFrequency H where H - L ≥ 100 Hz, and for any frequency f in [L, H], the mapped altitude SHALL equal `((f - L) / (H - L)) * canvasHeight`.
+
+**Validates: Requirements 11.3**
+
+### Property 15: Daily Seed Determinism
+
+*For any* date string in YYYY-MM-DD format, calling the seeded RNG with the same seed SHALL produce the identical sequence of values on every invocation, and different date strings SHALL produce different sequences.
+
+**Validates: Requirements 13.2**
+
+### Property 16: Ambient Music Frequency Harmonization
+
+*For any* valid player pitch frequency f, the ambient oscillator frequency SHALL equal either f/2 (octave below) or f × 2/3 (perfect fifth below), and when pitch is null, the oscillator SHALL play at 110 Hz.
+
+**Validates: Requirements 12.2, 12.3**
+
 ## Error Handling
 
 ### Audio Errors
@@ -555,7 +673,7 @@ The project uses **Vitest** as the test runner and **fast-check** as the propert
 
 **Testable modules for PBT:**
 - `PitchDetection.detect()` — Properties 1, 2 (using synthetic audio buffers)
-- `PitchMapper.mapToAltitude()` — Properties 3, 4, 5
+- `PitchMapper.mapToAltitude()` — Properties 3, 4, 5, 14
 - `scrollUpdate()` — Property 6
 - `ObstacleGenerator.update()` — Properties 7, 8
 - `CollisionDetector.checkObstacleCollision()` — Property 9
@@ -563,6 +681,9 @@ The project uses **Vitest** as the test runner and **fast-check** as the propert
 - `ScoreTracker.addScrollScore()` — Property 11
 - `GameState.reset()` — Property 12
 - `canvasResize()` — Property 13
+- `CalibrationManager.getEffectiveRange()` + `PitchMapper` — Property 14
+- `SeededRNG.create()` — Property 15
+- `AmbientMusic.update()` — Property 16
 
 ### Unit Tests (Vitest)
 
@@ -573,8 +694,15 @@ Example-based tests for:
 - Obstacle removal when off-screen
 - Obstacle pass bonus scoring
 - Initial plane positioning within left third of canvas
-- React component rendering (StartScreen, GameOverScreen, HUD)
+- React component rendering (StartScreen, GameOverScreen, HUD, CalibrationScreen)
 - localStorage high score read/write and graceful fallback
+- CalibrationManager: save/load/clear calibration data in localStorage
+- CalibrationManager: fallback to defaults when range < 100 Hz
+- AmbientMusic: start/stop lifecycle tied to game state transitions
+- AmbientMusic: mute/unmute toggle
+- SeededRNG: same date produces same sequence (determinism smoke test)
+- Daily challenge score saved separately from standard mode score
+- PWA manifest validation (required fields present)
 
 ### Integration / Cross-Browser Tests (Playwright)
 
