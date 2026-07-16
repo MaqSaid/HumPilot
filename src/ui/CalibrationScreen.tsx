@@ -141,10 +141,14 @@ export function CalibrationScreen({ onComplete, onSkip }: CalibrationScreenProps
   if (error) {
     return (
       <div className="calibration-screen">
-        <h2 className="calibration-screen__title">Calibration</h2>
+        <h2 className="calibration-screen__title">🎤 Calibration Required</h2>
+        <p className="calibration-screen__instruction">
+          You must calibrate your voice before playing.<br />
+          This helps the game respond accurately to <strong>your</strong> unique vocal range.
+        </p>
         <div className="start-screen__error" role="alert">{error}</div>
         <button className="btn btn--ghost calibration-screen__skip" onClick={onSkip}>
-          Skip
+          Next
         </button>
       </div>
     );
@@ -158,7 +162,11 @@ export function CalibrationScreen({ onComplete, onSkip }: CalibrationScreenProps
 
   return (
     <div className="calibration-screen">
-      <h2 className="calibration-screen__title">Calibration</h2>
+      <h2 className="calibration-screen__title">🎤 Calibration Required</h2>
+      <p className="calibration-screen__instruction">
+        You must calibrate your voice before playing.<br />
+        This takes just a few seconds and makes the controls feel natural for <strong>your</strong> voice.
+      </p>
       <p className="calibration-screen__prompt">{promptText}</p>
 
       {step !== 'done' && (
@@ -179,7 +187,7 @@ export function CalibrationScreen({ onComplete, onSkip }: CalibrationScreenProps
       )}
 
       <button className="btn btn--ghost calibration-screen__skip" onClick={onSkip}>
-        Skip
+        Next
       </button>
     </div>
   );

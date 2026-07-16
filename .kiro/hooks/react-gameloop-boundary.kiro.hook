@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Game Loop Boundary Check",
+  "description": "Reminds the agent to verify game loop independence from React and check that no setState calls exist in game logic modules",
+  "version": "1",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      "write"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Before writing to game logic files (src/game/ or src/rendering/), verify: 1) No React imports (useState, useEffect, etc.) in game/rendering modules. 2) No direct DOM manipulation. 3) All functions use deltaTime for frame independence. 4) No mutation of shared state without going through the proper update flow."
+  }
+}

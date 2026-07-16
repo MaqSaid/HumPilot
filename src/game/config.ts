@@ -22,8 +22,8 @@ export const GAME_CONFIG = {
   MAX_ALTITUDE_CHANGE_RATIO: 0.1, // 10% of canvas height per frame
 
   // Obstacles
-  INITIAL_GAP_MULTIPLIER: 1.5,
-  MIN_GAP_MULTIPLIER: 1.2,
+  INITIAL_GAP_MULTIPLIER: 4,
+  MIN_GAP_MULTIPLIER: 2.5,
   INITIAL_SPAWN_INTERVAL: 4,     // seconds
   MIN_SPAWN_INTERVAL: 1,         // seconds
   MAX_SPAWN_INTERVAL: 4,         // seconds
