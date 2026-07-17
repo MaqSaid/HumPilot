@@ -336,3 +336,28 @@
   color: #555;
   margin-bottom: 1.5rem;
 }
+
+/* Error Boundary */
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  width: 100%;
+  height: 100%;
+}
+
+.error-boundary__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #d32f2f;
+  margin-bottom: 1rem;
+}
+
+.error-boundary__message {
+  font-size: 1.25rem;
+  color: #555;
+  margin-bottom: 2rem;
+}

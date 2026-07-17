@@ -4,6 +4,7 @@ import { CalibrationScreen } from './ui/CalibrationScreen';
 import { GameOverScreen } from './ui/GameOverScreen';
 import { HUD } from './ui/HUD';
 import { GameCanvas } from './ui/GameCanvas';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 import { CalibrationManager } from './audio/CalibrationManager';
 import { AudioCapture } from './audio/AudioCapture';
 import { setMode as setDailyMode } from './game/DailyChallenge';
@@ -141,7 +142,7 @@ function App() {
       )}
 
       {screen === 'playing' && audioCaptureRef.current && (
-        <>
+        <ErrorBoundary onReset={handleRestart}>
           <GameCanvas
             isDailyMode={isDailyMode}
             onGameOver={handleGameOver}
@@ -169,7 +170,7 @@ function App() {
               </button>
             </div>
           )}
-        </>
+        </ErrorBoundary>
       )}
 
       {screen === 'gameover' && gameOverState && (

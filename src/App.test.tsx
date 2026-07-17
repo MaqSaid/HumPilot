@@ -10,7 +10,7 @@ describe('App', () => {
 
   it('renders the calibration screen on first launch (no calibration)', () => {
     render(<App />);
-    expect(screen.getByText('Calibration')).toBeInTheDocument();
+    expect(screen.getByText('🎤 Calibration Required')).toBeInTheDocument();
   });
 
   it('renders the start screen when calibration exists', () => {
